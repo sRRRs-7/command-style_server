@@ -1,0 +1,5 @@
+*.env
+.vscode
+Makefile
+gin.log
+.history

@@ -1,0 +1,48 @@
+version: "3.9"
+services:
+  # nginx:
+  #   container_name: "nginx"
+  #   build: ../nginx/nginx_app
+  #   ports:
+  #     - 80:80
+  nextjs:
+    container_name: "nextjs"
+    build: ../app
+    ports:
+      - 3000:3000
+  postgres:
+    container_name: postgres
+    build: ./postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=command_style
+    ports:
+      - 5432:5432
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./postgres/script:/docker-entrypoint-initdb.d
+      - ./postgres/conf:/etc/postgresql/postgresql.conf
+  redis:
+    image: redis:7.0-alpine
+    container_name: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - ./data/redis:/data
+  api:
+    container_name: go_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    links:
+      - postgres:postgres
+      - redis:redis
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - 8080:8080
+    entrypoint: ["/app/start.sh"]
+    command: ["/app/main"]
