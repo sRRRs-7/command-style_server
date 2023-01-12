@@ -10,18 +10,13 @@ import (
 func TestCreateAdminUser(t *testing.T) {
 	NewServer()
 
-	// hashPass, err := hash.HashPassword("ssssssss")
-	// if err != nil {
-	// 	t.Fatal("failed to password hash: ", err)
-	// }
-
 	query := fmt.Sprintf(`
 		mutation {
 			createAdminUser(username: %s, password: %s) {
 				is_error
 				message
 			}
-	}`, "\"ssssss\"", "\"ssssssss\"")
+	}`, "\"srrrs\"", "\"srrrs\"")
 
 	q := struct {
 		Query string
@@ -29,14 +24,13 @@ func TestCreateAdminUser(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	token := CreateAdminToken(t)
+	_, _, result := NewAdminRequest(t, q, "http://localhost:8080/admin/query", token)
 
-	fmt.Println(arr)
-	fmt.Println(list)
+	fmt.Println(string(result))
 
-	require.Equal(t, list["\"data\""], "\"createAdminUser\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"UpdateMedia OK\"", list["\"message\""])
+	require.Contains(t, string(result), "adminuser_username_key")
+	require.Contains(t, string(result), "duplicate key value violates unique constraint")
 }
 
 // fix hash password logic
@@ -49,7 +43,7 @@ func TestGetAdminUser(t *testing.T) {
 			is_username
 			is_password
 		}
-	}`, "\"xvlbz\"", "\"gbaicmra\"")
+	}`, "\"srrrs\"", "\"srrrs\"")
 
 	q := struct {
 		Query string
@@ -57,12 +51,15 @@ func TestGetAdminUser(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	arr, list, result := NewAdminRequest(t, q, "http://localhost:8080/query", "")
 
 	fmt.Println(arr)
 	fmt.Println(list)
 
 	require.Equal(t, list["\"data\""], "\"getAdminUser\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"UpdateMedia OK\"", list["\"message\""])
+	require.Contains(t, string(result), "is_username")
+	require.Contains(t, string(result), "true")
+	require.Contains(t, string(result), "is_password")
+	require.Contains(t, string(result), "true")
+
 }

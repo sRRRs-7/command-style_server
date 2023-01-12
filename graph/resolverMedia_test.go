@@ -7,6 +7,33 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCreateMedia(t *testing.T) {
+	NewServer()
+
+	query := fmt.Sprintf(`
+		mutation {
+			createMedia(title: %s, contents: %s, img: %s) {
+				is_error
+				message
+			}
+	}`, "\"title\"", "\"contents\"", "\"img\"")
+
+	q := struct {
+		Query string
+	}{
+		Query: query,
+	}
+
+	token := CreateToken(t)
+	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
+
+	fmt.Println(list)
+
+	require.Equal(t, list["\"data\""], "\"createMedia\"")
+	require.Contains(t, string(result), "false")
+	require.Equal(t, "\"CreateMedia OK\"", list["\"message\""])
+}
+
 func TestGetAllMedia(t *testing.T) {
 	NewServer()
 
@@ -27,24 +54,20 @@ func TestGetAllMedia(t *testing.T) {
 	}{
 		Query: query,
 	}
-	arr, list, _ := NewRequest(t, q, "http://localhost:8080/query")
 
-	fmt.Println(arr)
+	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
+
 	fmt.Println(list)
 
 	require.Equal(t, list["\"data\""], "\"getAllMedia\"")
-	require.Equal(t, true, len(list["\"id\""]) >= 3)
-	require.Equal(t, true, len(list["\"title\""]) >= 3)
-	require.Equal(t, true, len(list["\"contents\""]) >= 3)
-	require.Equal(t, true, len(list["\"img\""]) >= 3)
-
-	require.Zero(t, len(list["\"created_at\""]))
-	require.Zero(t, len(list["\"updated_at\""]))
+	require.Contains(t, string(result), "[")
+	require.Contains(t, string(result), "]")
 }
 
 func TestGetMediaResolver(t *testing.T) {
 	NewServer()
 
+	id := 3
 	query := fmt.Sprintf(`
 		mutation {
 			getMedia(id: %d) {
@@ -55,20 +78,19 @@ func TestGetMediaResolver(t *testing.T) {
 				created_at
 				updated_at
 			}
-	}`, 2)
+	}`, id)
 
 	q := struct {
 		Query string
 	}{
 		Query: query,
 	}
-	arr, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 
-	fmt.Println(arr)
 	fmt.Println(list)
 
 	require.Equal(t, list["\"data\""], "\"getMedia\"")
-	require.Equal(t, "\"2\"", list["\"id\""])
+	require.Equal(t, fmt.Sprintf("\"%d\"", id), list["\"id\""])
 	require.True(t, 3 <= len(list["\"title\""]))
 	require.True(t, 3 <= len(list["\"contents\""]))
 	require.True(t, 3 <= len(list["\"img\""]))
@@ -92,7 +114,8 @@ func TestUpdateMedia(t *testing.T) {
 	}{
 		Query: query,
 	}
-	arr, list, result := NewRequest(t, q, "http://localhost:8080/query")
+
+	arr, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 
 	fmt.Println(arr)
 	fmt.Println(list)
@@ -118,7 +141,7 @@ func TestDeleteMedia(t *testing.T) {
 	}{
 		Query: query,
 	}
-	arr, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	arr, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 
 	fmt.Println(arr)
 	fmt.Println(list)

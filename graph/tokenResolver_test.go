@@ -2,6 +2,7 @@ package graph
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,13 +12,13 @@ func TestCreateToken(t *testing.T) {
 	CreateToken(t)
 }
 
-func CreateToken(t *testing.T) {
+func CreateToken(t *testing.T) string {
 	NewServer()
 
 	query := fmt.Sprintf(`
 		mutation {
 			createToken(username: %s)
-	}`, "\"vvvsadavvvv\"")
+	}`, "\"srrrs\"")
 
 	q := struct {
 		Query string
@@ -25,25 +26,27 @@ func CreateToken(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, _ := NewRequest(t, q, "http://localhost:8080/query")
+	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 
-	fmt.Println(arr)
-	fmt.Println(list)
+	arr := strings.Split(string(result), ":")
+	token := string(arr[2])[1 : len(arr[2])-3]
 
 	require.Equal(t, list["\"data\""], "\"createToken\"")
+
+	return token
 }
 
 func TestAdminCreateToken(t *testing.T) {
 	CreateToken(t)
 }
 
-func CreateAdminToken(t *testing.T) {
+func CreateAdminToken(t *testing.T) string {
 	NewServer()
 
 	query := fmt.Sprintf(`
 		mutation {
 			createAdminToken(username: %s, password: %s)
-	}`, "\"vvvsadavvvv\"", "\"vvvsadavvvv\"")
+	}`, "\"srrrs\"", "\"srrrs\"")
 
 	q := struct {
 		Query string
@@ -51,10 +54,11 @@ func CreateAdminToken(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, _ := NewRequest(t, q, "http://localhost:8080/query")
+	_, list, result := NewRequest(t, q, "http://localhost:8080/admin/query", "")
 
-	fmt.Println(arr)
-	fmt.Println(list)
+	arr := strings.Split(string(result), ":")
+	token := string(arr[2])[1 : len(arr[2])-3]
 
 	require.Equal(t, list["\"data\""], "\"createAdminToken\"")
+	return token
 }

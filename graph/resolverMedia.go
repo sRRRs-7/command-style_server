@@ -25,7 +25,7 @@ func (r *mutationResolver) CreateMediaResolver(ctx context.Context, title string
 		return nil, fmt.Errorf("load config error: %v", err)
 	}
 
-	cookie, err := gc.Cookie(conf.AdminCookieKey)
+	cookie, err := gc.Cookie(conf.RedisCookieKey)
 	if err != nil {
 		return nil, fmt.Errorf("CreateCollectionResolver cookie error: %v", err)
 	}
@@ -37,7 +37,6 @@ func (r *mutationResolver) CreateMediaResolver(ctx context.Context, title string
 	}
 	// string processing
 	name := utils.GetUsername(redisValue)
-
 	if name != "srrrs" {
 		return nil, fmt.Errorf("deffer admin user name")
 	}

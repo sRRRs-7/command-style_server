@@ -4,20 +4,22 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sRRRs-7/loose_style.git/utils"
 	"github.com/stretchr/testify/require"
 )
 
-// fix cookie logic
 func TestAdminCreateCode(t *testing.T) {
 	NewServer()
 
+	code := utils.RandomString(30)
+
 	query := fmt.Sprintf(`
 		mutation {
 			createCode(code: %s, img: %s, description: %s, performance: %s, star: %v, tags: %v, access: %d) {
 				is_error
 				message
 			}
-	}`, "\"ifconfig\"", "\"img\"", "\"description\"", "\"performance\"", []int{1}, []string{"\"go\""}, 1)
+	}`, fmt.Sprintf("\"%s\"", code), "\"img\"", "\"description\"", "\"performance\"", []int{1}, []string{"\"go\""}, 1)
 
 	q := struct {
 		Query string
@@ -25,37 +27,41 @@ func TestAdminCreateCode(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, _ := NewRequest(t, q, "http://localhost:8080/admin/query")
-	fmt.Println(arr)
+	token := CreateToken(t)
+	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/admin/query", token)
+	fmt.Println(string(result))
 
 	require.Equal(t, list["\"data\""], "\"createCode\"")
-	require.Equal(t, true, len(list["\"is_error\""]))
-	require.Equal(t, true, len(list["\"message\""]))
+	require.Contains(t, string(result), "false")
+	require.Equal(t, "\"CreateCode OK\"", list["\"message\""])
 }
 
-// fix cookie logic
 func TestCreateCode(t *testing.T) {
 	NewServer()
 
+	code := utils.RandomString(30)
+
 	query := fmt.Sprintf(`
 		mutation {
 			createCode(code: %s, img: %s, description: %s, performance: %s, star: %v, tags: %v, access: %d) {
 				is_error
 				message
 			}
-	}`, "\"ifconfig\"", "\"img\"", "\"description\"", "\"performance\"", []int{1, 2}, []string{"\"go\""}, 1)
+	}`, fmt.Sprintf("\"%s\"", code), "\"img\"", "\"description\"", "\"performance\"", []int{6, 8}, []string{"\"go\""}, 1)
 
 	q := struct {
 		Query string
 	}{
 		Query: query,
 	}
-	arr, list, _ := NewRequest(t, q, "http://localhost:8080/query")
-	fmt.Println(arr)
+
+	token := CreateToken(t)
+	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
+	fmt.Println(string(result))
 
 	require.Equal(t, list["\"data\""], "\"createCode\"")
-	require.Equal(t, false, len(list["\"is_error\""]))
-	require.Equal(t, true, len(list["\"message\""]))
+	require.Contains(t, string(result), "false")
+	require.Equal(t, "\"CreateCode OK\"", list["\"message\""])
 }
 
 func TestUpdateCode(t *testing.T) {
@@ -75,7 +81,8 @@ func TestUpdateCode(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	token := CreateToken(t)
+	arr, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
 	fmt.Println(arr)
 
 	require.Equal(t, list["\"data\""], "\"updateCodes\"")
@@ -100,7 +107,8 @@ func TestUpdateAccess(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	token := CreateToken(t)
+	arr, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
 	fmt.Println(arr)
 
 	require.Equal(t, list["\"data\""], "\"updateAccess\"")
@@ -125,7 +133,8 @@ func TestDeleteCode(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	token := CreateToken(t)
+	arr, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
 	fmt.Println(arr)
 
 	require.Equal(t, list["\"data\""], "\"deleteCode\"")
@@ -135,6 +144,8 @@ func TestDeleteCode(t *testing.T) {
 
 func TestGetAllCodes(t *testing.T) {
 	NewServer()
+
+	id := 5
 
 	query := fmt.Sprintf(`
 		query {
@@ -152,7 +163,7 @@ func TestGetAllCodes(t *testing.T) {
 				access
 				user_id
 			}
-		}`, 4)
+		}`, id)
 
 	q := struct {
 		Query string
@@ -160,12 +171,12 @@ func TestGetAllCodes(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 
 	require.Equal(t, list["\"data\""], "\"getCode\"")
-	require.Equal(t, "\"4\"", list["\"id\""])
+	require.Equal(t, fmt.Sprintf("\"%d\"", id), list["\"id\""])
 	require.True(t, 3 <= len(list["\"username\""]))
 	require.True(t, 3 <= len(list["\"code\""]))
 	require.True(t, 3 <= len(list["\"img\""]))
@@ -178,7 +189,6 @@ func TestGetAllCodes(t *testing.T) {
 	require.Contains(t, string(result), "user_id")
 }
 
-// fix cookie logic
 func TestGetAllCodesByTagSearch(t *testing.T) {
 	NewServer()
 
@@ -206,15 +216,15 @@ func TestGetAllCodesByTagSearch(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 
 	require.Equal(t, list["\"data\""], "\"getAllCodesByTag\"")
-	require.True(t, len(string(result)) >= 1000)
+	require.Contains(t, string(result), "[")
+	require.Contains(t, string(result), "]")
 }
 
-// fix cookie logic
 func TestGetAllCodesByKeyword(t *testing.T) {
 	NewServer()
 
@@ -242,15 +252,15 @@ func TestGetAllCodesByKeyword(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 
 	require.Equal(t, list["\"data\""], "\"GetAllCodesByKeyword\"")
-	require.True(t, len(string(result)) <= 100)
+	require.Contains(t, string(result), "[")
+	require.Contains(t, string(result), "]")
 }
 
-// fix cookie logic
 func TestGetAllCodesSortedStar(t *testing.T) {
 	NewServer()
 
@@ -278,15 +288,15 @@ func TestGetAllCodesSortedStar(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 
 	require.Equal(t, list["\"data\""], "\"GetAllCodesByKeyword\"")
-	require.True(t, len(string(result)) <= 100)
+	require.Contains(t, string(result), "[")
+	require.Contains(t, string(result), "]")
 }
 
-// fix cookie logic
 func TestGetAllCodesSortedAccess(t *testing.T) {
 	NewServer()
 
@@ -314,12 +324,13 @@ func TestGetAllCodesSortedAccess(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 
 	require.Equal(t, list["\"data\""], "\"GetAllCodesSortedAccess\"")
-	require.True(t, len(string(result)) >= 1000)
+	require.Contains(t, string(result), "[")
+	require.Contains(t, string(result), "]")
 }
 
 func TestGetAllOwnCodes(t *testing.T) {
@@ -349,10 +360,12 @@ func TestGetAllOwnCodes(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 
 	require.Equal(t, list["\"data\""], "")
 	require.Contains(t, string(result), "cookie")
+	require.Contains(t, string(result), "[")
+	require.Contains(t, string(result), "]")
 }

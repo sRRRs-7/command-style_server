@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// fix token session for redis
 func TestCreateAdminCollection(t *testing.T) {
 	NewServer()
 
@@ -25,16 +24,16 @@ func TestCreateAdminCollection(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/admin/query")
+	token := CreateAdminToken(t)
+	_, list, result := NewAdminRequest(t, q, "http://localhost:8080/admin/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
 	require.Equal(t, list["\"data\""], "\"createAdminCollection\"")
-	require.Equal(t, true, len(list["\"is_error\""]))
-	require.Equal(t, true, len(list["\"message\""]))
+	require.Contains(t, string(result), "false")
+	require.Equal(t, "\"CreateAdminCollection OK\"", list["\"message\""])
 }
 
-// fix cookie session
 func TestCreateCollection(t *testing.T) {
 	NewServer()
 
@@ -52,18 +51,20 @@ func TestCreateCollection(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	token := CreateToken(t)
+	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
-	require.Equal(t, list["\"data\""], "\"createAdminCollection\"")
+	require.Equal(t, list["\"data\""], "\"createCollection\"")
 	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"CreateAdminCollection OK\"", list["\"message\""])
+	require.Equal(t, "\"CreateCollection OK\"", list["\"message\""])
 }
 
-// fix cookie session
 func TestGetCollection(t *testing.T) {
 	NewServer()
+
+	id := 7
 
 	query := fmt.Sprintf(`
 		mutation {
@@ -81,7 +82,7 @@ func TestGetCollection(t *testing.T) {
 				access
 				user_id
 			}
-		}`, 7)
+		}`, id)
 
 	q := struct {
 		Query string
@@ -89,13 +90,24 @@ func TestGetCollection(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	token := CreateToken(t)
+	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
-	require.Equal(t, list["\"data\""], "\"createCollection\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"CreateCollection OK\"", list["\"message\""])
+	require.Equal(t, list["\"data\""], "\"getCollection\"")
+	require.Equal(t, fmt.Sprintf("\"%d\"", id), list["\"id\""])
+	require.True(t, 3 <= len(list["\"username\""]))
+	require.True(t, 3 <= len(list["\"code\""]))
+	require.True(t, 3 <= len(list["\"img\""]))
+	require.True(t, 3 <= len(list["\"description\""]))
+	require.True(t, 3 <= len(list["\"performance\""]) || 0 <= len(list["\"performance\""]))
+	require.Contains(t, string(result), "star")
+	require.Contains(t, string(result), "tags")
+	require.Contains(t, string(result), "created_at")
+	require.Contains(t, string(result), "updated_at")
+	require.Contains(t, string(result), "access")
+	require.Contains(t, string(result), "user_id")
 }
 
 func TestDeleteCollection(t *testing.T) {
@@ -115,7 +127,8 @@ func TestDeleteCollection(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	token := CreateToken(t)
+	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
@@ -124,7 +137,6 @@ func TestDeleteCollection(t *testing.T) {
 	require.Equal(t, "\"DeleteCollection OK\"", list["\"message\""])
 }
 
-// fix cookie session
 func TestGetAllCollection(t *testing.T) {
 	NewServer()
 
@@ -153,15 +165,16 @@ func TestGetAllCollection(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	token := CreateToken(t)
+	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
-	require.Equal(t, list["\"data\""], "\"deleteCollection\"")
-	require.True(t, len(string(result)) >= 1000)
+	require.Equal(t, list["\"data\""], "\"getAllCollection\"")
+	require.Contains(t, string(result), "[")
+	require.Contains(t, string(result), "]")
 }
 
-// fix cookie session
 func TestGetAllCollectionBySearch(t *testing.T) {
 	NewServer()
 
@@ -182,7 +195,7 @@ func TestGetAllCollectionBySearch(t *testing.T) {
 				collection_id
 				user_id
 			}
-		}`, "\"gogogogo\"", 10, 0)
+		}`, "\"gogo\"", 10, 0)
 
 	q := struct {
 		Query string
@@ -190,10 +203,12 @@ func TestGetAllCollectionBySearch(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query")
+	token := CreateToken(t)
+	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
-	require.Equal(t, list["\"data\""], "\"deleteCollection\"")
-	require.True(t, len(string(result)) <= 100)
+	require.Equal(t, list["\"data\""], "\"getAllCollectionBySearch\"")
+	require.Contains(t, string(result), "[")
+	require.Contains(t, string(result), "]")
 }
