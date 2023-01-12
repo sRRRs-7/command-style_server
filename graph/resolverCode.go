@@ -124,8 +124,6 @@ func (r *mutationResolver) CreateCodeResolver(ctx context.Context, code string, 
 	// string processing
 	username := utils.GetUsername(redisValue)
 
-	fmt.Println(username)
-
 	// tags str convert lower case
 	tag := make([]string, 0)
 	for i := range tags {

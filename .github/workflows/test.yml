@@ -13,7 +13,6 @@ jobs:
     services:
       # Label used to access the service container
       postgres:
-        # Docker Hub image
         image: postgres:15-alpine
         env:
           POSTGRES_USER: root
@@ -29,11 +28,11 @@ jobs:
 
       # Label used to access the service container
       redis:
-        # Docker Hub image
         image: redis:7.0-alpine
         ports:
           - 6379:6379
 
+    # workflow steps
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -47,8 +46,8 @@ jobs:
       - name: Install sql-migrate
         run: go install github.com/rubenv/sql-migrate/...@latest
 
-      # - name: Run migrations
-      #   run: sql-migrate up -config=sql_migrate.yml
+      - name: Run migrations
+        run: sql-migrate up -config=sql_migrate.yml
 
       - name: Test
         run: go test -v -cover ./...

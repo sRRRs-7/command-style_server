@@ -33,7 +33,6 @@ func TestCreateAdminUser(t *testing.T) {
 	require.Contains(t, string(result), "duplicate key value violates unique constraint")
 }
 
-// fix hash password logic
 func TestGetAdminUser(t *testing.T) {
 	NewServer()
 

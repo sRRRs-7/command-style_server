@@ -20,3 +20,17 @@ func GetUsername(redisValue *redis.StringCmd) string {
 
 	return username
 }
+
+func GetUsernameTest(redisValue string) string {
+	s := strings.Split(redisValue, ",")
+	if len(s) <= 1 {
+		log.Println("get username by redis error")
+		return ""
+	}
+	s = strings.Split(s[1], ":")
+	username := s[1]
+	username = username[1:]
+	username = username[:len(username)-1]
+
+	return username
+}
