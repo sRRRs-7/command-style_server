@@ -13,63 +13,77 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    services:
-      # Label used to access the service container
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: root
-          POSTGRES_PASSWORD: secret
-          POSTGRES_DB: command_style
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        volumes:
-          - "/data/postgres:/var/lib/postgresql/data"
-          - "/postgres/script:/docker-entrypoint-initdb.d"
-          - "/postgres/conf:/etc/postgresql/postgresql.conf"
-        ports:
-          - 5432:5432
-      # Label used to access the service container
-      redis:
-        image: redis:7.0-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-      # Label used to access the service container
-      # after push git package image
-      go_api:
-        image: ghcr.io/srrrs-7/server-api-repo/server-api:latest
-        options: >-
-          --health-cmd "curl -f http://127.0.0.1:8080/api/health_check"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 8080:8080
-
-    # workflow steps
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19.3
-        id: go
-
       - name: Checkout code into the Go module directory
         uses: actions/checkout@v3
 
-      - name: Install sql-migrate
-        run: go install github.com/rubenv/sql-migrate/...@latest
+      - name: docker-compose
+        uses: docker-compose up -d
 
-      - name: Run migrations
-        run: sql-migrate up -config=sql_migrate.yml
+      - name: docker-compose test
+        uses: docker-compose exec go_api go test -cover ./...
+# jobs:
+#   test:
+#     name: Test
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 5
+#     services:
+#       # Label used to access the service container
+#       postgres:
+#         image: postgres:15-alpine
+#         env:
+#           POSTGRES_USER: root
+#           POSTGRES_PASSWORD: secret
+#           POSTGRES_DB: command_style
+#         options: >-
+#           --health-cmd pg_isready
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+#         volumes:
+#           - "/data/postgres:/var/lib/postgresql/data"
+#           - "/postgres/script:/docker-entrypoint-initdb.d"
+#           - "/postgres/conf:/etc/postgresql/postgresql.conf"
+#         ports:
+#           - 5432:5432
+#       # Label used to access the service container
+#       redis:
+#         image: redis:7.0-alpine
+#         options: >-
+#           --health-cmd "redis-cli ping"
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+#         ports:
+#           - 6379:6379
+#       # Label used to access the service container
+#       # after push git package image
+#       go_api:
+#         image: ghcr.io/srrrs-7/server-api-repo/server-api:latest
+#         options: >-
+#           --health-cmd "curl -f http://127.0.0.1:8080/api/health_check"
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+#         ports:
+#           - 8080:8080
 
-      - name: Test
-        run: go test -v -cover ./...
+#     # workflow steps
+#     steps:
+#       - name: Set up Go
+#         uses: actions/setup-go@v3
+#         with:
+#           go-version: 1.19.3
+#         id: go
+
+#       - name: Checkout code into the Go module directory
+#         uses: actions/checkout@v3
+
+#       - name: Install sql-migrate
+#         run: go install github.com/rubenv/sql-migrate/...@latest
+
+#       - name: Run migrations
+#         run: sql-migrate up -config=sql_migrate.yml
+
+#       - name: Test
+#         run: go test -v -cover ./...
