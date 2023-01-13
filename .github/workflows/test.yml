@@ -45,7 +45,7 @@ jobs:
           - 6379:6379
       # Label used to access the service container
       # after push git package image
-      api:
+      go_api:
         image: ghcr.io/srrrs-7/server-api-repo/server-api:latest
         options: >-
           --health-cmd "curl -f http://127.0.0.1:8080/api/health_check"
