@@ -64,8 +64,5 @@ jobs:
       - name: Run migrations
         run: sql-migrate up -config=sql_migrate.yml
 
-      - name: Go api server start
-        run: go run main.go
-
       - name: Test
         run: go test -v -cover ./...
