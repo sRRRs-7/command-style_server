@@ -46,6 +46,8 @@ jobs:
       # after push git package image
       go_api:
         image: ghcr.io/srrrs-7/server-api-repo/server-api:latest
+        options: >-
+          --health-cmd "curl -f http://127.0.0.1:8080/api/health_check"
         ports:
           - 8080:8080
 

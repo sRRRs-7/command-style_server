@@ -33,9 +33,7 @@ services:
       - ./data/redis:/data
   api:
     container_name: go_api
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     links:
       - postgres:postgres
       - redis:redis
