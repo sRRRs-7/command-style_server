@@ -11,12 +11,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sRRRs-7/loose_style.git/cfg"
 	db "github.com/sRRRs-7/loose_style.git/db/sqlc"
-	"github.com/sRRRs-7/loose_style.git/graph/generated"
 	"github.com/sRRRs-7/loose_style.git/token"
 	"github.com/sRRRs-7/loose_style.git/utils"
 )
@@ -49,11 +46,6 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(m.Run())
-}
-
-func NewServer() {
-	h := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &Resolver{}}))
-	h.AddTransport(transport.POST{})
 }
 
 func NewCookieRequest(t *testing.T, q struct{ Query string }, endpoint, token string) (arr []string, list map[string]string, result []byte) {

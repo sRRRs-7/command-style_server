@@ -8,8 +8,6 @@ import (
 )
 
 func TestCreateAdminUser(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			createAdminUser(username: %s, password: %s) {
@@ -34,8 +32,6 @@ func TestCreateAdminUser(t *testing.T) {
 }
 
 func TestGetAdminUser(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 	mutation {
 		getAdminUser(username: %s, password: %s) {

@@ -9,8 +9,6 @@ import (
 )
 
 func TestCreateUserResolver(t *testing.T) {
-	NewServer()
-
 	username := utils.RandomString(10)
 	email := utils.RandomEmail()
 
@@ -38,8 +36,6 @@ func TestCreateUserResolver(t *testing.T) {
 }
 
 func TestLoginUser(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			loginUser(username: %s, password: %s) {

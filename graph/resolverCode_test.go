@@ -9,8 +9,6 @@ import (
 )
 
 func TestAdminCreateCode(t *testing.T) {
-	NewServer()
-
 	code := utils.RandomString(30)
 
 	query := fmt.Sprintf(`
@@ -37,8 +35,6 @@ func TestAdminCreateCode(t *testing.T) {
 }
 
 func TestCreateCode(t *testing.T) {
-	NewServer()
-
 	code := utils.RandomString(30)
 
 	query := fmt.Sprintf(`
@@ -65,8 +61,6 @@ func TestCreateCode(t *testing.T) {
 }
 
 func TestUpdateCode(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			updateCodes(id: %d, code: %s, img: %s, description: %s, performance: %s, tags: %v) {
@@ -91,8 +85,6 @@ func TestUpdateCode(t *testing.T) {
 }
 
 func TestUpdateAccess(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			updateAccess(id: %d, access: %d) {
@@ -117,8 +109,6 @@ func TestUpdateAccess(t *testing.T) {
 }
 
 func TestDeleteCode(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			deleteCode(id: %d) {
@@ -143,8 +133,6 @@ func TestDeleteCode(t *testing.T) {
 }
 
 func TestGetAllCodes(t *testing.T) {
-	NewServer()
-
 	id := 5
 
 	query := fmt.Sprintf(`
@@ -190,8 +178,6 @@ func TestGetAllCodes(t *testing.T) {
 }
 
 func TestGetAllCodesByTagSearch(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		query {
 			getAllCodesByTag(tags: %v, sortBy: %s, limit: %d, skip: %d) {
@@ -226,8 +212,6 @@ func TestGetAllCodesByTagSearch(t *testing.T) {
 }
 
 func TestGetAllCodesByKeyword(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		query {
 			GetAllCodesByKeyword(keyword: %s, limit: %d, skip: %d) {
@@ -262,8 +246,6 @@ func TestGetAllCodesByKeyword(t *testing.T) {
 }
 
 func TestGetAllCodesSortedStar(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		query {
 			GetAllCodesByKeyword(keyword: %s, limit: %d, skip: %d) {
@@ -298,8 +280,6 @@ func TestGetAllCodesSortedStar(t *testing.T) {
 }
 
 func TestGetAllCodesSortedAccess(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		query {
 			GetAllCodesSortedAccess(limit: %d, skip: %d) {
@@ -334,8 +314,6 @@ func TestGetAllCodesSortedAccess(t *testing.T) {
 }
 
 func TestGetAllOwnCodes(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		query {
 			getAllOwnCodes(limit: %d, skip: %d) {

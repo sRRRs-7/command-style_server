@@ -8,8 +8,6 @@ import (
 )
 
 func TestCreateAdminCollection(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			createAdminCollection(user_id: %d, code_id: %d) {
@@ -35,8 +33,6 @@ func TestCreateAdminCollection(t *testing.T) {
 }
 
 func TestCreateCollection(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			createCollection(code_id: %d) {
@@ -62,8 +58,6 @@ func TestCreateCollection(t *testing.T) {
 }
 
 func TestGetCollection(t *testing.T) {
-	NewServer()
-
 	id := 7
 
 	query := fmt.Sprintf(`
@@ -111,8 +105,6 @@ func TestGetCollection(t *testing.T) {
 }
 
 func TestDeleteCollection(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			deleteCollection(id: %d) {
@@ -138,8 +130,6 @@ func TestDeleteCollection(t *testing.T) {
 }
 
 func TestGetAllCollection(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		query {
 			getAllCollection(limit: %d, skip: %d) {
@@ -176,8 +166,6 @@ func TestGetAllCollection(t *testing.T) {
 }
 
 func TestGetAllCollectionBySearch(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		query {
 			getAllCollectionBySearch(keyword: %s, limit: %d, skip: %d) {

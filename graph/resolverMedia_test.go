@@ -8,8 +8,6 @@ import (
 )
 
 func TestCreateMedia(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			createMedia(title: %s, contents: %s, img: %s) {
@@ -35,8 +33,6 @@ func TestCreateMedia(t *testing.T) {
 }
 
 func TestGetAllMedia(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		query {
 			getAllMedia(limit: %d, skip: %d) {
@@ -65,8 +61,6 @@ func TestGetAllMedia(t *testing.T) {
 }
 
 func TestGetMediaResolver(t *testing.T) {
-	NewServer()
-
 	id := 3
 	query := fmt.Sprintf(`
 		mutation {
@@ -99,8 +93,6 @@ func TestGetMediaResolver(t *testing.T) {
 }
 
 func TestUpdateMedia(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			updateMedia(id: %s, title: %s, contents: %s, img: %s) {
@@ -126,8 +118,6 @@ func TestUpdateMedia(t *testing.T) {
 }
 
 func TestDeleteMedia(t *testing.T) {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			deleteMedia(id: %d) {

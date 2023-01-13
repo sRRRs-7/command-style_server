@@ -13,8 +13,6 @@ func TestCreateToken(t *testing.T) {
 }
 
 func CreateToken(t *testing.T) string {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			createToken(username: %s)
@@ -41,8 +39,6 @@ func TestAdminCreateToken(t *testing.T) {
 }
 
 func CreateAdminToken(t *testing.T) string {
-	NewServer()
-
 	query := fmt.Sprintf(`
 		mutation {
 			createAdminToken(username: %s, password: %s)
