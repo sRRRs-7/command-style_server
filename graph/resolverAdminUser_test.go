@@ -25,7 +25,7 @@ func TestCreateAdminUser(t *testing.T) {
 	}
 
 	token := CreateAdminToken(t)
-	_, _, result := NewAdminRequest(t, q, "http://api:8080/admin/query", token)
+	_, _, result := NewAdminRequest(t, q, "http://127.0.0.1:8080/admin/query", token)
 
 	fmt.Println(string(result))
 
@@ -50,7 +50,7 @@ func TestGetAdminUser(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, result := NewAdminRequest(t, q, "http://api:8080/query", "")
+	arr, list, result := NewAdminRequest(t, q, "http://127.0.0.1:8080/query", "")
 
 	fmt.Println(arr)
 	fmt.Println(list)

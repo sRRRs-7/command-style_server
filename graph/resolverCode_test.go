@@ -28,7 +28,7 @@ func TestAdminCreateCode(t *testing.T) {
 	}
 
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://api:8080/admin/query", token)
+	_, list, result := NewCookieRequest(t, q, "http://127.0.0.1:8080/admin/query", token)
 	fmt.Println(string(result))
 
 	require.Equal(t, list["\"data\""], "\"createCode\"")
@@ -56,7 +56,7 @@ func TestCreateCode(t *testing.T) {
 	}
 
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://api:8080/query", token)
+	_, list, result := NewCookieRequest(t, q, "http://127.0.0.1:8080/query", token)
 	fmt.Println(string(result))
 
 	require.Equal(t, list["\"data\""], "\"createCode\"")
@@ -82,7 +82,7 @@ func TestUpdateCode(t *testing.T) {
 	}
 
 	token := CreateToken(t)
-	arr, list, result := NewCookieRequest(t, q, "http://api:8080/query", token)
+	arr, list, result := NewCookieRequest(t, q, "http://127.0.0.1:8080/query", token)
 	fmt.Println(arr)
 
 	require.Equal(t, list["\"data\""], "\"updateCodes\"")
@@ -108,7 +108,7 @@ func TestUpdateAccess(t *testing.T) {
 	}
 
 	token := CreateToken(t)
-	arr, list, result := NewCookieRequest(t, q, "http://api:8080/query", token)
+	arr, list, result := NewCookieRequest(t, q, "http://127.0.0.1:8080/query", token)
 	fmt.Println(arr)
 
 	require.Equal(t, list["\"data\""], "\"updateAccess\"")
@@ -134,7 +134,7 @@ func TestDeleteCode(t *testing.T) {
 	}
 
 	token := CreateToken(t)
-	arr, list, result := NewCookieRequest(t, q, "http://api:8080/query", token)
+	arr, list, result := NewCookieRequest(t, q, "http://127.0.0.1:8080/query", token)
 	fmt.Println(arr)
 
 	require.Equal(t, list["\"data\""], "\"deleteCode\"")
@@ -171,7 +171,7 @@ func TestGetAllCodes(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://api:8080/query", "")
+	_, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 
@@ -216,7 +216,7 @@ func TestGetAllCodesByTagSearch(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://api:8080/query", "")
+	_, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 
@@ -252,7 +252,7 @@ func TestGetAllCodesByKeyword(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://api:8080/query", "")
+	_, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 
@@ -288,7 +288,7 @@ func TestGetAllCodesSortedStar(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://api:8080/query", "")
+	_, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 
@@ -324,7 +324,7 @@ func TestGetAllCodesSortedAccess(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://api:8080/query", "")
+	_, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 
@@ -360,7 +360,7 @@ func TestGetAllOwnCodes(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://api:8080/query", "")
+	_, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
 	fmt.Println(string(result))
 	fmt.Println(list)
 

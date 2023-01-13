@@ -28,7 +28,7 @@ func TestCreateUserResolver(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://api:8080/query", "")
+	_, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
 
 	fmt.Println(list)
 
@@ -55,7 +55,7 @@ func TestLoginUser(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, result := NewRequest(t, q, "http://api:8080/query", "")
+	arr, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
 
 	fmt.Println(arr)
 	fmt.Println(list)

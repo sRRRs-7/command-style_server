@@ -26,7 +26,7 @@ func CreateToken(t *testing.T) string {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://api:8080/query", "")
+	_, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
 
 	arr := strings.Split(string(result), ":")
 	token := string(arr[2])[1 : len(arr[2])-3]
@@ -54,7 +54,7 @@ func CreateAdminToken(t *testing.T) string {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://api:8080/admin/query", "")
+	_, list, result := NewRequest(t, q, "http://127.0.0.1:8080/admin/query", "")
 
 	arr := strings.Split(string(result), ":")
 	token := string(arr[2])[1 : len(arr[2])-3]
