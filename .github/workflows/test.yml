@@ -42,10 +42,6 @@ jobs:
       # after push git package image
       api:
         image: ghcr.io/srrrs-7/server-api-repo/server-api:latest
-        options: >-
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
         ports:
           - 8080:8080
 
