@@ -25,7 +25,7 @@ func TestCreateAdminCollection(t *testing.T) {
 	}
 
 	token := CreateAdminToken(t)
-	_, list, result := NewAdminRequest(t, q, "http://localhost:8080/admin/query", token)
+	_, list, result := NewAdminRequest(t, q, "http://127.0.0.1:8080/admin/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
@@ -52,7 +52,7 @@ func TestCreateCollection(t *testing.T) {
 	}
 
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
+	_, list, result := NewCookieRequest(t, q, "http://127.0.0.1:8080/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
@@ -91,7 +91,7 @@ func TestGetCollection(t *testing.T) {
 	}
 
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
+	_, list, result := NewCookieRequest(t, q, "http://127.0.0.1:8080/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
@@ -128,7 +128,7 @@ func TestDeleteCollection(t *testing.T) {
 	}
 
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
+	_, list, result := NewCookieRequest(t, q, "http://127.0.0.1:8080/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
@@ -166,7 +166,7 @@ func TestGetAllCollection(t *testing.T) {
 	}
 
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
+	_, list, result := NewCookieRequest(t, q, "http://127.0.0.1:8080/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
@@ -204,7 +204,7 @@ func TestGetAllCollectionBySearch(t *testing.T) {
 	}
 
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
+	_, list, result := NewCookieRequest(t, q, "http://127.0.0.1:8080/query", token)
 	fmt.Println(string(result))
 	fmt.Println(list)
 
