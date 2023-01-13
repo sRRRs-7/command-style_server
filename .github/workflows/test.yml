@@ -16,7 +16,7 @@ jobs:
     services:
       # Label used to access the service container
       postgres:
-        image: ghcr.io/srrrs-7/postgresrepo/postgres:latest
+        image: postgres:15-alpine
         env:
           POSTGRES_USER: root
           POSTGRES_PASSWORD: secret
@@ -45,7 +45,7 @@ jobs:
       # Label used to access the service container
       # after push git package image
       go_api:
-        image: ghcr.io/srrrs-7/server-api-repo/server-api:latest
+        image: server-api:latest
         options: >-
           --health-cmd "curl -f http://127.0.0.1:8080/api/health_check"
           --health-interval 10s
