@@ -25,7 +25,7 @@ func TestCreateMedia(t *testing.T) {
 	}
 
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://127.0.0.1:8080/query", token)
+	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
 
 	fmt.Println(list)
 
@@ -55,7 +55,7 @@ func TestGetAllMedia(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
+	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 
 	fmt.Println(list)
 
@@ -85,7 +85,7 @@ func TestGetMediaResolver(t *testing.T) {
 	}{
 		Query: query,
 	}
-	_, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
+	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 
 	fmt.Println(list)
 
@@ -115,7 +115,7 @@ func TestUpdateMedia(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
+	arr, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 
 	fmt.Println(arr)
 	fmt.Println(list)
@@ -141,7 +141,7 @@ func TestDeleteMedia(t *testing.T) {
 	}{
 		Query: query,
 	}
-	arr, list, result := NewRequest(t, q, "http://127.0.0.1:8080/query", "")
+	arr, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 
 	fmt.Println(arr)
 	fmt.Println(list)
