@@ -26,6 +26,10 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        volumes:
+          - ./data/postgres:/var/lib/postgresql/data
+          - ./postgres/script:/docker-entrypoint-initdb.d
+          - ./postgres/conf:/etc/postgresql/postgresql.conf
         ports:
           - 5432:5432
       # Label used to access the service container
@@ -42,6 +46,11 @@ jobs:
       # after push git package image
       api:
         image: ghcr.io/srrrs-7/server-api-repo/server-api:latest
+        options: >-
+          --health-cmd "curl -f http://127.0.0.1:8080/api/health_check"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         ports:
           - 8080:8080
 
