@@ -45,7 +45,7 @@ jobs:
       # Label used to access the service container
       # after push git package image
       go_api:
-        image: ghcr.io/srrrs-7/server-api-repo/server-api:latest
+        image: server-api:latest
         ports:
           - 8080:8080
 
