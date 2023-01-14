@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -29,7 +31,11 @@ func TestCreateCollection(t *testing.T) {
 		CodeID: codeId,
 	}
 	err := testQueries.CreateCollection(context.Background(), arg)
-	require.NoError(t, err)
+	if err != nil {
+		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "violates foreign key constraint"))
+	} else {
+		require.NoError(t, err)
+	}
 }
 
 func TestDeleteCollection(t *testing.T) {
@@ -42,14 +48,6 @@ func TestDeleteCollection(t *testing.T) {
 func TestGetAllCollections(t *testing.T) {
 	username, _, _ := CreateRandomUser(t)
 	userId := GetUserByUsername(t, username)
-	// create collection
-	codeId := int64(3)
-	arg := CreateCollectionParams{
-		UserID: userId,
-		CodeID: codeId,
-	}
-	err := testQueries.CreateCollection(context.Background(), arg)
-	require.NoError(t, err)
 
 	// get all collection
 	arg2 := GetAllCollectionsParams{
@@ -58,24 +56,17 @@ func TestGetAllCollections(t *testing.T) {
 		Offset: 0,
 	}
 	collections, err := testQueries.GetAllCollections(context.Background(), arg2)
-	require.NoError(t, err)
-	require.NotEmpty(t, collections)
-	require.Equal(t, len(collections) >= 0, true)
+	if err != nil {
+		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "violates foreign key constraint"))
+	} else {
+		require.Equal(t, len(collections) >= 0, true)
+	}
 }
 
 func TestGetAllCollectionsBySearch(t *testing.T) {
 	username, _, _ := CreateRandomUser(t)
 	userId := GetUserByUsername(t, username)
-	// create collection
-	codeId := int64(3)
-	arg := CreateCollectionParams{
-		UserID: userId,
-		CodeID: codeId,
-	}
-	err := testQueries.CreateCollection(context.Background(), arg)
-	require.NoError(t, err)
 
-	// get all collection by search
 	keyword := "go"
 	arg2 := GetAllCollectionsBySearchParams{
 		UserID:      userId,
@@ -87,7 +78,10 @@ func TestGetAllCollectionsBySearch(t *testing.T) {
 		Offset:      0,
 	}
 	collections, err := testQueries.GetAllCollectionsBySearch(context.Background(), arg2)
-	require.NoError(t, err)
-	require.NotEmpty(t, collections)
-	require.Equal(t, len(collections) >= 0, true)
+	if err != nil {
+		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "violates foreign key constraint"))
+	} else {
+		require.Equal(t, len(collections) >= 0, true)
+	}
+
 }

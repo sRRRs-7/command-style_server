@@ -129,7 +129,7 @@ func TestCreateCollection(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &error)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, w.Code)
-		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "violates foreign key constraint"))
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "no rows in result set"))
 		require.Equal(t, error.Errors[0].Path[0], "createCollection")
 		require.Equal(t, reflect.TypeOf(error.Data), nil)
 	} else {

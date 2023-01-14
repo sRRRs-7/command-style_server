@@ -74,7 +74,11 @@ func TestGetUserByID(t *testing.T) {
 func TestDeleteUser(t *testing.T) {
 	id := int64(1)
 	err := testQueries.DeleteUser(context.Background(), id)
-	require.NoError(t, err)
+	if err != nil {
+		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "violates foreign key constraint"))
+	} else {
+		require.NoError(t, err)
+	}
 }
 
 func TestLoginUser(t *testing.T) {

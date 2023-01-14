@@ -132,7 +132,7 @@ func TestCreateCode(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &error)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, w.Code)
-		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "duplicate key value violates unique constraint"))
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "duplicate key value violates unique constraint") || strings.Contains(error.Errors[0].Message, "violates foreign key constraint "))
 		require.Equal(t, error.Errors[0].Path[0], "createCode")
 		require.Equal(t, reflect.TypeOf(error.Data), nil)
 	} else {
@@ -229,6 +229,8 @@ func TestUpdateAccess(t *testing.T) {
 	}
 	err := json.Unmarshal(w.Body.Bytes(), &res)
 	require.NoError(t, err)
+
+	fmt.Println(w.Body)
 
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, w.Code)

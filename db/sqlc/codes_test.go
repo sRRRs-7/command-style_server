@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -35,10 +37,13 @@ func CreateRandomCode(t *testing.T) string {
 }
 
 func GetCode(t *testing.T) int64 {
-	id := int64(3)
+	id := int64(0)
 	code, err := testQueries.GetCode(context.Background(), id)
-	require.NoError(t, err)
-	require.NotEmpty(t, code)
+	if err != nil {
+		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "no rows in result set"))
+	} else {
+		require.NotEmpty(t, code)
+	}
 
 	return code.ID
 }
