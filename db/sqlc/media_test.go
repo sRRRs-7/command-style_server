@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ListMedia(t *testing.T) *Media {
+func TestListMedia(t *testing.T) {
 	arg := ListMediaParams{
 		Limit:  30,
 		Offset: 0,
@@ -17,12 +17,6 @@ func ListMedia(t *testing.T) *Media {
 	medias, err := testQueries.ListMedia(context.Background(), arg)
 	require.NoError(t, err)
 	require.True(t, len(medias) >= 0)
-
-	return medias[0]
-}
-
-func TestListMedia(t *testing.T) {
-	ListMedia(t)
 }
 
 func TestCreateMedia(t *testing.T) {
@@ -41,17 +35,14 @@ func TestCreateMedia(t *testing.T) {
 }
 
 func TestGetMedia(t *testing.T) {
-	m := ListMedia(t)
-	media, err := testQueries.GetMedia(context.Background(), m.ID)
+	media, err := testQueries.GetMedia(context.Background(), 1)
 	require.NoError(t, err)
 	require.NotEmpty(t, media)
 }
 
 func TestUpdateMedia(t *testing.T) {
-	m := ListMedia(t)
-
 	arg := UpdateMediaParams{
-		ID:       m.ID,
+		ID:       1,
 		Title:    "hello",
 		Contents: "fine",
 		Img:      []byte{10},
@@ -61,7 +52,6 @@ func TestUpdateMedia(t *testing.T) {
 }
 
 func TestDeleteMedia(t *testing.T) {
-	m := ListMedia(t)
-	err := testQueries.DeleteMedia(context.Background(), m.ID)
+	err := testQueries.DeleteMedia(context.Background(), 1)
 	require.NoError(t, err)
 }

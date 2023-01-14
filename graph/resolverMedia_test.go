@@ -102,7 +102,7 @@ func TestGetAllMedia(t *testing.T) {
 	require.Equal(t, true, len(res.Data.GetAllMedia) >= 0)
 }
 
-func TestGetMediaResolver(t *testing.T) {
+func TestGetMedia(t *testing.T) {
 	r := GinTestRouter()
 
 	id := 1
@@ -136,24 +136,19 @@ func TestGetMediaResolver(t *testing.T) {
 
 	fmt.Println(w.Body)
 
-	var res struct {
-		Data struct {
-			GetAllMedia model.Media
-		}
+	type errRes struct {
+		Message string
+		Path    []string
 	}
-	err := json.Unmarshal(w.Body.Bytes(), &res)
-	require.NoError(t, err)
+	var error struct {
+		Errors []errRes
+		Data   any
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &error)
 
-	if res.Data.GetAllMedia.Contents == "" {
-		type errRes struct {
-			Message string
-			Path    []string
-		}
-		var error struct {
-			Errors []errRes
-			Data   any
-		}
-		err := json.Unmarshal(w.Body.Bytes(), &error)
+	fmt.Println(error.Errors[0].Message)
+
+	if strings.Contains(error.Errors[0].Message, "no rows in result set") {
 		fmt.Println(error)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, w.Code)
@@ -161,6 +156,13 @@ func TestGetMediaResolver(t *testing.T) {
 		require.Equal(t, error.Errors[0].Path[0], "getMedia")
 		require.Equal(t, reflect.TypeOf(error.Data), nil)
 	} else {
+		var res struct {
+			Data struct {
+				GetAllMedia model.Media
+			}
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &res)
+		require.NoError(t, err)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, w.Code)
 		require.Equal(t, res.Data.GetAllMedia.ID, id)
