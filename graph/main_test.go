@@ -45,7 +45,7 @@ func TestMain(m *testing.M) {
 }
 
 func GinTestRouter() *gin.Engine {
-	gin.SetMode(gin.DebugMode)
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(GinContextToContextCookie(tokenMaker))
 	r.Use(dataloaders.DataLoaderMiddleware(resolver.store))
