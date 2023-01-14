@@ -10,8 +10,7 @@ import (
 )
 
 func TestCountStar(t *testing.T) {
-	code := GetAllCodes(t)
-	cnt, err := testQueries.CountStar(context.Background(), code.ID)
+	cnt, err := testQueries.CountStar(context.Background(), 1)
 	if err != nil {
 		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "\"stars\" does not exist "))
 	} else {

@@ -10,8 +10,7 @@ import (
 )
 
 func GetCollection(t *testing.T) int64 {
-	id := GetCode(t)
-	code, err := testQueries.GetCollection(context.Background(), id)
+	code, err := testQueries.GetCollection(context.Background(), 1)
 	if err != nil {
 		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "no rows in result set"))
 	} else {

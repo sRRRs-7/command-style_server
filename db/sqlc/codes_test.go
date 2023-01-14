@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func CreateRandomCode(t *testing.T) string {
+func TestCodes(t *testing.T) {
 	username := "srrrs"
 	code := utils.RandomString(10)
 	description := utils.RandomString(20)
@@ -36,11 +36,9 @@ func CreateRandomCode(t *testing.T) string {
 	} else {
 		require.NoError(t, err)
 	}
-
-	return username
 }
 
-func GetCode(t *testing.T) int64 {
+func TestGetCode(t *testing.T) {
 	id := int64(0)
 	code, err := testQueries.GetCode(context.Background(), id)
 	if err != nil {
@@ -48,11 +46,9 @@ func GetCode(t *testing.T) int64 {
 	} else {
 		require.NotEmpty(t, code)
 	}
-
-	return code.ID
 }
 
-func GetAllCodes(t *testing.T) *Codes {
+func TestGetAllCodes(t *testing.T) {
 	arg := GetAllCodesParams{
 		Limit:  30,
 		Offset: 0,
@@ -60,19 +56,6 @@ func GetAllCodes(t *testing.T) *Codes {
 	codes, err := testQueries.GetAllCodes(context.Background(), arg)
 	require.NoError(t, err)
 	require.Equal(t, len(codes) >= 0, true)
-
-	return codes[0]
-}
-func TestCodes(t *testing.T) {
-	CreateRandomCode(t)
-}
-
-func TestGetCode(t *testing.T) {
-	GetCode(t)
-}
-
-func TestGetAllCodes(t *testing.T) {
-	GetAllCodes(t)
 }
 
 func TestGetAllCodesByKeyword(t *testing.T) {
@@ -132,7 +115,7 @@ func TestGetAllCodesSortStar(t *testing.T) {
 }
 
 func TestGetAllOwnCodes(t *testing.T) {
-	username := CreateRandomCode(t)
+	username := utils.RandomUser(5)
 	arg := GetAllOwnCodesParams{
 		Username: username,
 		Limit:    30,
