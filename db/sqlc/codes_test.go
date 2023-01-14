@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCodes(t *testing.T) {
+func TestCreateCodes(t *testing.T) {
 	username := "srrrs"
 	code := utils.RandomString(10)
 	description := utils.RandomString(20)
@@ -32,7 +32,7 @@ func TestCodes(t *testing.T) {
 	}
 	err := testQueries.CreateCode(context.Background(), arg1)
 	if err != nil {
-		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "no rows in result set"))
+		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "violates foreign key constraint"))
 	} else {
 		require.NoError(t, err)
 	}
