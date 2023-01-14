@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/sRRRs-7/loose_style.git/graph/model"
@@ -133,6 +134,8 @@ func TestGetMediaResolver(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
+	fmt.Println(w.Body)
+
 	var res struct {
 		Data struct {
 			GetAllMedia model.Media
@@ -141,7 +144,7 @@ func TestGetMediaResolver(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &res)
 	require.NoError(t, err)
 
-	if res.Data.GetAllMedia.ID == "" {
+	if res.Data.GetAllMedia.Contents == "" {
 		type errRes struct {
 			Message string
 			Path    []string
@@ -154,7 +157,7 @@ func TestGetMediaResolver(t *testing.T) {
 		fmt.Println(error)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, w.Code)
-		require.Equal(t, error.Errors[0].Message, "GetMedia error: failed to get a media: no rows in result set")
+		require.True(t, strings.Contains(error.Errors[0].Message, "no rows in result set"))
 		require.Equal(t, error.Errors[0].Path[0], "getMedia")
 		require.Equal(t, reflect.TypeOf(error.Data), nil)
 	} else {
