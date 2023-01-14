@@ -15,7 +15,8 @@ import (
 
 // initialize Gin
 func (r *Resolver) GinRouter(tokenMaker token.Maker) {
-	router := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost",
