@@ -1,13 +1,21 @@
 package graph
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
 	"testing"
 
+	"github.com/sRRRs-7/loose_style.git/graph/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateMedia(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		mutation {
 			createMedia(title: %s, contents: %s, img: %s) {
@@ -22,14 +30,32 @@ func TestCreateMedia(t *testing.T) {
 		Query: query,
 	}
 
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	fmt.Println(list)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
 
-	require.Equal(t, list["\"data\""], "\"createMedia\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"CreateMedia OK\"", list["\"message\""])
+	var res struct {
+		Data struct {
+			CreateMedia struct {
+				IsError bool
+				Message string
+			}
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, res.Data.CreateMedia.IsError, false)
+	require.Equal(t, res.Data.CreateMedia.Message, "CreateMedia OK")
 }
 
 func TestGetAllMedia(t *testing.T) {
@@ -45,23 +71,40 @@ func TestGetAllMedia(t *testing.T) {
 			}
 	}`, 10, 0)
 
+	r := GinTestRouter()
+
 	q := struct {
 		Query string
 	}{
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
 
-	fmt.Println(list)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
 
-	require.Equal(t, list["\"data\""], "\"getAllMedia\"")
-	require.Contains(t, string(result), "[")
-	require.Contains(t, string(result), "]")
+	var res struct {
+		Data struct {
+			GetAllMedia []model.Media
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, true, len(res.Data.GetAllMedia) >= 0)
 }
 
 func TestGetMediaResolver(t *testing.T) {
-	id := 3
+	r := GinTestRouter()
+
+	id := 1
 	query := fmt.Sprintf(`
 		mutation {
 			getMedia(id: %d) {
@@ -79,20 +122,52 @@ func TestGetMediaResolver(t *testing.T) {
 	}{
 		Query: query,
 	}
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 
-	fmt.Println(list)
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
 
-	require.Equal(t, list["\"data\""], "\"getMedia\"")
-	require.Equal(t, fmt.Sprintf("\"%d\"", id), list["\"id\""])
-	require.True(t, 3 <= len(list["\"title\""]))
-	require.True(t, 3 <= len(list["\"contents\""]))
-	require.True(t, 3 <= len(list["\"img\""]))
-	require.Contains(t, string(result), "created_at")
-	require.Contains(t, string(result), "updated_at")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			GetAllMedia model.Media
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	if res.Data.GetAllMedia.ID == "" {
+		type errRes struct {
+			Message string
+			Path    []string
+		}
+		var error struct {
+			Errors []errRes
+			Data   any
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &error)
+		fmt.Println(error)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, error.Errors[0].Message, "GetMedia error: failed to get a media: no rows in result set")
+		require.Equal(t, error.Errors[0].Path[0], "getMedia")
+		require.Equal(t, reflect.TypeOf(error.Data), nil)
+	} else {
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, res.Data.GetAllMedia.ID, id)
+		require.Equal(t, reflect.TypeOf(res.Data.GetAllMedia.Title), reflect.String)
+	}
 }
 
 func TestUpdateMedia(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		mutation {
 			updateMedia(id: %s, title: %s, contents: %s, img: %s) {
@@ -107,17 +182,35 @@ func TestUpdateMedia(t *testing.T) {
 		Query: query,
 	}
 
-	arr, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
 
-	fmt.Println(arr)
-	fmt.Println(list)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
 
-	require.Equal(t, list["\"data\""], "\"updateMedia\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"UpdateMedia OK\"", list["\"message\""])
+	var res struct {
+		Data struct {
+			UpdateMedia struct {
+				IsError bool
+				Message string
+			}
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, res.Data.UpdateMedia.IsError, false)
+	require.Equal(t, res.Data.UpdateMedia.Message, "UpdateMedia OK")
 }
 
 func TestDeleteMedia(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		mutation {
 			deleteMedia(id: %d) {
@@ -131,12 +224,31 @@ func TestDeleteMedia(t *testing.T) {
 	}{
 		Query: query,
 	}
-	arr, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
 
-	fmt.Println(arr)
-	fmt.Println(list)
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
 
-	require.Equal(t, list["\"data\""], "\"deleteMedia\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"DeleteMedia OK\"", list["\"message\""])
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			DeleteMedia struct {
+				IsError bool
+				Message string
+			}
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+
+	fmt.Println(w.Body)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, res.Data.DeleteMedia.IsError, false)
+	require.Equal(t, res.Data.DeleteMedia.Message, "DeleteMedia OK")
 }

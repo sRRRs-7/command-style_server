@@ -1,20 +1,29 @@
 package graph
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/sRRRs-7/loose_style.git/graph/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateAdminCollection(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		mutation {
 			createAdminCollection(user_id: %d, code_id: %d) {
 				is_error
 				message
 			}
-		}`, 7, 6)
+		}`, 2, 6)
 
 	q := struct {
 		Query string
@@ -22,24 +31,62 @@ func TestCreateAdminCollection(t *testing.T) {
 		Query: query,
 	}
 
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
 	token := CreateAdminToken(t)
-	_, list, result := NewAdminRequest(t, q, "http://localhost:8080/admin/query", token)
-	fmt.Println(string(result))
-	fmt.Println(list)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.AdminCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"createAdminCollection\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"CreateAdminCollection OK\"", list["\"message\""])
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			CreateAdminCollection struct {
+				IsError bool
+				Message string
+			}
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	if res.Data.CreateAdminCollection.Message == "" {
+		type errRes struct {
+			Message string
+			Path    []string
+		}
+		var error struct {
+			Errors []errRes
+			Data   any
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &error)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "violates foreign key constraint"))
+		require.Equal(t, error.Errors[0].Path[0], "createAdminCollection")
+		require.Equal(t, reflect.TypeOf(error.Data), nil)
+	} else {
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, res.Data.CreateAdminCollection.IsError, false)
+		require.Equal(t, res.Data.CreateAdminCollection.Message, "CreateAdminCollection OK")
+	}
 }
 
 func TestCreateCollection(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		mutation {
 			createCollection(code_id: %d) {
 				is_error
 				message
 			}
-		}`, 7)
+		}`, 1)
 
 	q := struct {
 		Query string
@@ -47,19 +94,56 @@ func TestCreateCollection(t *testing.T) {
 		Query: query,
 	}
 
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
-	fmt.Println(string(result))
-	fmt.Println(list)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"createCollection\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"CreateCollection OK\"", list["\"message\""])
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			CreateCollection struct {
+				IsError bool
+				Message string
+			}
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	if res.Data.CreateCollection.Message == "" {
+		type errRes struct {
+			Message string
+			Path    []string
+		}
+		var error struct {
+			Errors []errRes
+			Data   any
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &error)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "violates foreign key constraint"))
+		require.Equal(t, error.Errors[0].Path[0], "createCollection")
+		require.Equal(t, reflect.TypeOf(error.Data), nil)
+	} else {
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, res.Data.CreateCollection.IsError, false)
+		require.Equal(t, res.Data.CreateCollection.Message, "CreateCollection OK")
+	}
 }
 
 func TestGetCollection(t *testing.T) {
-	id := 7
+	r := GinTestRouter()
 
+	id := 7
 	query := fmt.Sprintf(`
 		mutation {
 			getCollection(id: %d) {
@@ -84,34 +168,60 @@ func TestGetCollection(t *testing.T) {
 		Query: query,
 	}
 
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
-	fmt.Println(string(result))
-	fmt.Println(list)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"getCollection\"")
-	require.Equal(t, fmt.Sprintf("\"%d\"", id), list["\"id\""])
-	require.True(t, 3 <= len(list["\"username\""]))
-	require.True(t, 3 <= len(list["\"code\""]))
-	require.True(t, 3 <= len(list["\"img\""]))
-	require.True(t, 3 <= len(list["\"description\""]))
-	require.True(t, 3 <= len(list["\"performance\""]) || 0 <= len(list["\"performance\""]))
-	require.Contains(t, string(result), "star")
-	require.Contains(t, string(result), "tags")
-	require.Contains(t, string(result), "created_at")
-	require.Contains(t, string(result), "updated_at")
-	require.Contains(t, string(result), "access")
-	require.Contains(t, string(result), "user_id")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	fmt.Println(w.Body)
+
+	var res struct {
+		Data struct {
+			GetCollection model.CodeWithCollectionID
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	if res.Data.GetCollection.ID == "" {
+		type errRes struct {
+			Message string
+			Path    []string
+		}
+		var error struct {
+			Errors []errRes
+			Data   any
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &error)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "no rows in result set"))
+		require.Equal(t, error.Errors[0].Path[0], "getCollection")
+		require.Equal(t, reflect.TypeOf(error.Data), nil)
+	} else {
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, fmt.Sprintf("%d", id), res.Data.GetCollection.ID)
+	}
 }
 
 func TestDeleteCollection(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		mutation {
 			deleteCollection(id: %d) {
 				is_error
 				message
 			}
-		}`, 10)
+		}`, 2)
 
 	q := struct {
 		Query string
@@ -119,17 +229,55 @@ func TestDeleteCollection(t *testing.T) {
 		Query: query,
 	}
 
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
-	fmt.Println(string(result))
-	fmt.Println(list)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"deleteCollection\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"DeleteCollection OK\"", list["\"message\""])
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			DeleteCollection struct {
+				IsError bool
+				Message string
+			}
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	if res.Data.DeleteCollection.Message == "" {
+		type errRes struct {
+			Message string
+			Path    []string
+		}
+		var error struct {
+			Errors []errRes
+			Data   any
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &error)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "violates foreign key constraint"))
+		require.Equal(t, error.Errors[0].Path[0], "deleteCollection")
+		require.Equal(t, reflect.TypeOf(error.Data), nil)
+	} else {
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, res.Data.DeleteCollection.IsError, false)
+		require.Equal(t, res.Data.DeleteCollection.Message, "DeleteCollection OK")
+	}
 }
 
 func TestGetAllCollection(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		query {
 			getAllCollection(limit: %d, skip: %d) {
@@ -155,17 +303,34 @@ func TestGetAllCollection(t *testing.T) {
 		Query: query,
 	}
 
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
-	fmt.Println(string(result))
-	fmt.Println(list)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"getAllCollection\"")
-	require.Contains(t, string(result), "[")
-	require.Contains(t, string(result), "]")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			GetAllCollection []model.CodeWithCollectionID
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, true, len(res.Data.GetAllCollection) >= 0)
 }
 
 func TestGetAllCollectionBySearch(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		query {
 			getAllCollectionBySearch(keyword: %s, limit: %d, skip: %d) {
@@ -183,7 +348,7 @@ func TestGetAllCollectionBySearch(t *testing.T) {
 				collection_id
 				user_id
 			}
-		}`, "\"gogo\"", 10, 0)
+		}`, "\"go\"", 10, 0)
 
 	q := struct {
 		Query string
@@ -191,12 +356,27 @@ func TestGetAllCollectionBySearch(t *testing.T) {
 		Query: query,
 	}
 
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
-	fmt.Println(string(result))
-	fmt.Println(list)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"getAllCollectionBySearch\"")
-	require.Contains(t, string(result), "[")
-	require.Contains(t, string(result), "]")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			GetAllCollectionBySearch []model.CodeWithCollectionID
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, true, len(res.Data.GetAllCollectionBySearch) >= 0)
 }

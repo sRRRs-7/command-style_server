@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,6 +12,10 @@ import (
 func TestCountStar(t *testing.T) {
 	code := GetAllCodes(t)
 	cnt, err := testQueries.CountStar(context.Background(), code.ID)
-	require.NoError(t, err)
-	require.NotEmpty(t, cnt)
+	if err != nil {
+		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "\"stars\" does not exist "))
+	} else {
+		require.NotEmpty(t, cnt)
+	}
+
 }

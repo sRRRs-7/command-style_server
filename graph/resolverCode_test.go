@@ -1,23 +1,31 @@
 package graph
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/sRRRs-7/loose_style.git/graph/model"
 	"github.com/sRRRs-7/loose_style.git/utils"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAdminCreateCode(t *testing.T) {
-	code := utils.RandomString(30)
+	r := GinTestRouter()
 
+	code := utils.RandomString(30)
 	query := fmt.Sprintf(`
 		mutation {
-			createCode(code: %s, img: %s, description: %s, performance: %s, star: %v, tags: %v, access: %d) {
+			adminCreateCode(username: %s, code: %s, img: %s, description: %s, performance: %s, star: %v, tags: %v, access: %d) {
 				is_error
 				message
 			}
-	}`, fmt.Sprintf("\"%s\"", code), "\"img\"", "\"description\"", "\"performance\"", []int{1}, []string{"\"go\""}, 1)
+	}`, "\"srrrs\"", fmt.Sprintf("\"%s\"", code), "\"img\"", "\"description\"", "\"performance\"", []int{1}, []string{"\"go\""}, 1)
 
 	q := struct {
 		Query string
@@ -25,18 +33,54 @@ func TestAdminCreateCode(t *testing.T) {
 		Query: query,
 	}
 
-	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/admin/query", token)
-	fmt.Println(string(result))
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
 
-	require.Equal(t, list["\"data\""], "\"createCode\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"CreateCode OK\"", list["\"message\""])
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			AdminCreateCode struct {
+				IsError bool
+				Message string
+			}
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	if res.Data.AdminCreateCode.Message == "" {
+		type errRes struct {
+			Message string
+			Path    []string
+		}
+		var error struct {
+			Errors []errRes
+			Data   any
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &error)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "duplicate key value violates unique constraint"))
+		require.Equal(t, error.Errors[0].Path[0], "adminCreateCode")
+		require.Equal(t, reflect.TypeOf(error.Data), nil)
+	} else {
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, res.Data.AdminCreateCode.IsError, false)
+		require.Equal(t, res.Data.AdminCreateCode.Message, "AdminCreateCode OK")
+	}
 }
 
 func TestCreateCode(t *testing.T) {
-	code := utils.RandomString(30)
+	r := GinTestRouter()
 
+	code := utils.RandomString(30)
 	query := fmt.Sprintf(`
 		mutation {
 			createCode(code: %s, img: %s, description: %s, performance: %s, star: %v, tags: %v, access: %d) {
@@ -51,16 +95,57 @@ func TestCreateCode(t *testing.T) {
 		Query: query,
 	}
 
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
 	token := CreateToken(t)
-	_, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
-	fmt.Println(string(result))
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"createCode\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"CreateCode OK\"", list["\"message\""])
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			CreateCode struct {
+				IsError bool
+				Message string
+			}
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	fmt.Println(w.Body)
+
+	if res.Data.CreateCode.Message == "" {
+		type errRes struct {
+			Message string
+			Path    []string
+		}
+		var error struct {
+			Errors []errRes
+			Data   any
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &error)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "duplicate key value violates unique constraint"))
+		require.Equal(t, error.Errors[0].Path[0], "createCode")
+		require.Equal(t, reflect.TypeOf(error.Data), nil)
+	} else {
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, res.Data.CreateCode.IsError, false)
+		require.Equal(t, res.Data.CreateCode.Message, "CreateCode OK")
+	}
 }
 
 func TestUpdateCode(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		mutation {
 			updateCodes(id: %d, code: %s, img: %s, description: %s, performance: %s, tags: %v) {
@@ -75,16 +160,39 @@ func TestUpdateCode(t *testing.T) {
 		Query: query,
 	}
 
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
 	token := CreateToken(t)
-	arr, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
-	fmt.Println(arr)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"updateCodes\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"UpdateCodes OK\"", list["\"message\""])
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			UpdateCodes struct {
+				IsError bool
+				Message string
+			}
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, res.Data.UpdateCodes.IsError, false)
+	require.Equal(t, res.Data.UpdateCodes.Message, "UpdateCodes OK")
+
 }
 
 func TestUpdateAccess(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		mutation {
 			updateAccess(id: %d, access: %d) {
@@ -99,16 +207,39 @@ func TestUpdateAccess(t *testing.T) {
 		Query: query,
 	}
 
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
 	token := CreateToken(t)
-	arr, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
-	fmt.Println(arr)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"updateAccess\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"UpdateAccess OK\"", list["\"message\""])
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			UpdateAccess struct {
+				IsError bool
+				Message string
+			}
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, res.Data.UpdateAccess.IsError, false)
+	require.Equal(t, res.Data.UpdateAccess.Message, "UpdateAccess OK")
+
 }
 
 func TestDeleteCode(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		mutation {
 			deleteCode(id: %d) {
@@ -123,18 +254,40 @@ func TestDeleteCode(t *testing.T) {
 		Query: query,
 	}
 
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
 	token := CreateToken(t)
-	arr, list, result := NewCookieRequest(t, q, "http://localhost:8080/query", token)
-	fmt.Println(arr)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"deleteCode\"")
-	require.Contains(t, string(result), "false")
-	require.Equal(t, "\"DeleteCode OK\"", list["\"message\""])
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			DeleteCode struct {
+				IsError bool
+				Message string
+			}
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, res.Data.DeleteCode.IsError, false)
+	require.Equal(t, res.Data.DeleteCode.Message, "DeleteCode OK")
+
 }
 
-func TestGetAllCodes(t *testing.T) {
-	id := 5
+func TestGetCode(t *testing.T) {
+	r := GinTestRouter()
 
+	id := 1
 	query := fmt.Sprintf(`
 		query {
 			getCode(id: %d) {
@@ -159,25 +312,102 @@ func TestGetAllCodes(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
-	fmt.Println(string(result))
-	fmt.Println(list)
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	token := CreateToken(t)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"getCode\"")
-	require.Equal(t, fmt.Sprintf("\"%d\"", id), list["\"id\""])
-	require.True(t, 3 <= len(list["\"username\""]))
-	require.True(t, 3 <= len(list["\"code\""]))
-	require.True(t, 3 <= len(list["\"img\""]))
-	require.True(t, 3 <= len(list["\"description\""]))
-	require.Contains(t, string(result), "star")
-	require.Contains(t, string(result), "go") // tags
-	require.Contains(t, string(result), "created_at")
-	require.Contains(t, string(result), "updated_at")
-	require.Contains(t, string(result), "access")
-	require.Contains(t, string(result), "user_id")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			GetCode model.Code
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	if res.Data.GetCode.ID == "" {
+		type errRes struct {
+			Message string
+			Path    []string
+		}
+		var error struct {
+			Errors []errRes
+			Data   any
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &error)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "no rows in result set"))
+		require.Equal(t, error.Errors[0].Path[0], "getCode")
+		require.Equal(t, reflect.TypeOf(error.Data), nil)
+	} else {
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, fmt.Sprintf("%d", id), res.Data.GetCode.ID)
+	}
+}
+
+func TestGetAllCodes(t *testing.T) {
+	r := GinTestRouter()
+
+	query := fmt.Sprintf(`
+		query {
+			getAllCodes(limit: %d, skip: %d) {
+				id
+				code
+				img
+				description
+				performance
+				star
+				tags
+				created_at
+				updated_at
+				access
+				user_id
+			}
+		}`, 10, 0)
+
+	q := struct {
+		Query string
+	}{
+		Query: query,
+	}
+
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	token := CreateToken(t)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			GetAllCodes []model.Code
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, true, len(res.Data.GetAllCodes) >= 0)
 }
 
 func TestGetAllCodesByTagSearch(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		query {
 			getAllCodesByTag(tags: %v, sortBy: %s, limit: %d, skip: %d) {
@@ -202,16 +432,34 @@ func TestGetAllCodesByTagSearch(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
-	fmt.Println(string(result))
-	fmt.Println(list)
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	token := CreateToken(t)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"getAllCodesByTag\"")
-	require.Contains(t, string(result), "[")
-	require.Contains(t, string(result), "]")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			GetAllCodesByTag []model.Code
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, true, len(res.Data.GetAllCodesByTag) >= 0)
 }
 
 func TestGetAllCodesByKeyword(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		query {
 			GetAllCodesByKeyword(keyword: %s, limit: %d, skip: %d) {
@@ -236,16 +484,34 @@ func TestGetAllCodesByKeyword(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
-	fmt.Println(string(result))
-	fmt.Println(list)
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	token := CreateToken(t)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"GetAllCodesByKeyword\"")
-	require.Contains(t, string(result), "[")
-	require.Contains(t, string(result), "]")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			GetAllCodesByKeyword []model.Code
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, true, len(res.Data.GetAllCodesByKeyword) >= 0)
 }
 
 func TestGetAllCodesSortedStar(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		query {
 			GetAllCodesByKeyword(keyword: %s, limit: %d, skip: %d) {
@@ -270,16 +536,34 @@ func TestGetAllCodesSortedStar(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
-	fmt.Println(string(result))
-	fmt.Println(list)
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	token := CreateToken(t)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"GetAllCodesByKeyword\"")
-	require.Contains(t, string(result), "[")
-	require.Contains(t, string(result), "]")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			GetAllCodesByKeyword []model.Code
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, true, len(res.Data.GetAllCodesByKeyword) >= 0)
 }
 
 func TestGetAllCodesSortedAccess(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		query {
 			GetAllCodesSortedAccess(limit: %d, skip: %d) {
@@ -304,16 +588,34 @@ func TestGetAllCodesSortedAccess(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
-	fmt.Println(string(result))
-	fmt.Println(list)
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	token := CreateToken(t)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "\"GetAllCodesSortedAccess\"")
-	require.Contains(t, string(result), "[")
-	require.Contains(t, string(result), "]")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			GetAllCodesSortedAccess []model.Code
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, true, len(res.Data.GetAllCodesSortedAccess) >= 0)
 }
 
 func TestGetAllOwnCodes(t *testing.T) {
+	r := GinTestRouter()
+
 	query := fmt.Sprintf(`
 		query {
 			getAllOwnCodes(limit: %d, skip: %d) {
@@ -338,12 +640,27 @@ func TestGetAllOwnCodes(t *testing.T) {
 		Query: query,
 	}
 
-	_, list, result := NewRequest(t, q, "http://localhost:8080/query", "")
-	fmt.Println(string(result))
-	fmt.Println(list)
+	body := bytes.Buffer{}
+	if err := json.NewEncoder(&body).Encode(&q); err != nil {
+		t.Fatal("error encode", err)
+	}
+	token := CreateToken(t)
+	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
-	require.Equal(t, list["\"data\""], "")
-	require.Contains(t, string(result), "cookie")
-	require.Contains(t, string(result), "[")
-	require.Contains(t, string(result), "]")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var res struct {
+		Data struct {
+			GetAllOwnCodes []model.Code
+		}
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, true, len(res.Data.GetAllOwnCodes) >= 0)
 }

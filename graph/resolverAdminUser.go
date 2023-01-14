@@ -60,7 +60,7 @@ func (r *mutationResolver) CreateAdminUserResolver(ctx context.Context, username
 
 	res := &model.MutationResponse{
 		IsError: false,
-		Message: "create a admin user OK",
+		Message: "CreateAdminUser OK",
 	}
 
 	return res, nil

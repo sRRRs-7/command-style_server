@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -47,6 +48,7 @@ func graphqlHandler(r *Resolver) gin.HandlerFunc {
 				dataloaders: r.dataloaders,
 				tx:          r.tx,
 			}}))
+	h.AddTransport(transport.POST{})
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)

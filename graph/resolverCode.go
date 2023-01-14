@@ -29,28 +29,6 @@ func (r *mutationResolver) AdminCreateCodeResolver(ctx context.Context, username
 		return nil, fmt.Errorf("gin context convert error: %v", err)
 	}
 
-	conf, err := cfg.LoadConfig("../")
-	if err != nil {
-		return nil, fmt.Errorf("load config error: %v", err)
-	}
-
-	cookie, err := gc.Cookie(conf.AdminCookieKey)
-	if err != nil {
-		return nil, fmt.Errorf("AdminCreateCodeResolver cookie error: %v", err)
-	}
-
-	// redis value get
-	redisValue := session.GetRedis(gc, cookie)
-	if redisValue == nil {
-		return nil, fmt.Errorf("get all cart item error get redis value is nil : %v", err)
-	}
-	// string processing
-	name := utils.GetUsername(redisValue)
-
-	if name != "srrrs" {
-		return nil, fmt.Errorf("deffer admin user name")
-	}
-
 	// tags str convert lower case
 	tag := make([]string, len(tags))
 	for i, t := range tags {

@@ -42,16 +42,6 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-      # Label used to access the service container
-      # after push git package image
-      go_api:
-        image: ghcr.io/srrrs-7/server-api-repo/server-api:latest
-        options: >-
-          --health-cmd "curl -f http://127.0.0.1:8080/api/health_check"
-          --health-interval 10s
-          --health-retries 5
-        ports:
-          - 8080:8080
 
     # workflow step
     steps:

@@ -38,11 +38,11 @@ func (r *Resolver) GinRouter(tokenMaker token.Maker) {
 	})
 
 	// auth router
-	playGroundRouter := router.Group("/")
-	playGroundRouter.Use(GinContextToContextCookie(tokenMaker))
-	playGroundRouter.Use(dataloaders.DataLoaderMiddleware(r.store))
-	playGroundRouter.POST("/query", graphqlHandler(r))
-	playGroundRouter.GET("/query", graphqlHandler(r))
+	basicRouter := router.Group("/")
+	basicRouter.Use(GinContextToContextCookie(tokenMaker))
+	basicRouter.Use(dataloaders.DataLoaderMiddleware(r.store))
+	basicRouter.POST("/query", graphqlHandler(r))
+	basicRouter.GET("/query", graphqlHandler(r))
 
 	// auth router
 	adminRouter := router.Group("/admin")

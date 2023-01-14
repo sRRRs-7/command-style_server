@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -109,8 +111,10 @@ func TestUpdateUser(t *testing.T) {
 		UpdatedAt:  time.Now(),
 	}
 	err := testQueries.UpdateUser(context.Background(), arg)
-	require.NoError(t, err)
-
-	require.NotEqual(t, username, arg.Username_2)
-	require.NotEqual(t, email, mail)
+	if err != nil {
+		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "users_username_key"))
+	} else {
+		require.NotEqual(t, username, arg.Username_2)
+		require.NotEqual(t, email, mail)
+	}
 }

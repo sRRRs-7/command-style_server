@@ -10,8 +10,8 @@ FROM --platform=linux/amd64 golang:1.20-rc-alpine3.17
 WORKDIR /app
 COPY --from=builder ./app .
 
-# RUN ["chmod", "+x", "/app/start.sh"]
-# ENTRYPOINT ["/app/start.sh"]
+RUN ["chmod", "+x", "/app/start.sh"]
+ENTRYPOINT ["/app/start.sh"]
 
 EXPOSE 8080
 CMD ["/app/main"]
