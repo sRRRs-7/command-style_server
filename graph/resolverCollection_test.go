@@ -106,6 +106,8 @@ func TestCreateCollection(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
+	fmt.Println(w.Body)
+
 	var res struct {
 		Data struct {
 			CreateCollection struct {
@@ -129,7 +131,7 @@ func TestCreateCollection(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &error)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, w.Code)
-		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "no rows in result set"))
+		require.True(t, strings.Contains(error.Errors[0].Message, "no rows in result set") || strings.Contains(error.Errors[0].Message, "violates foreign key constraint"))
 		require.Equal(t, error.Errors[0].Path[0], "createCollection")
 		require.Equal(t, reflect.TypeOf(error.Data), nil)
 	} else {

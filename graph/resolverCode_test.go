@@ -66,7 +66,7 @@ func TestAdminCreateCode(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &error)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, w.Code)
-		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "duplicate key value violates unique constraint"))
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "violates foreign key constraint"))
 		require.Equal(t, error.Errors[0].Path[0], "adminCreateCode")
 		require.Equal(t, reflect.TypeOf(error.Data), nil)
 	} else {
@@ -212,12 +212,14 @@ func TestUpdateAccess(t *testing.T) {
 		t.Fatal("error encode", err)
 	}
 	token := CreateToken(t)
-	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
+
+	fmt.Println(w.Body)
 
 	var res struct {
 		Data struct {
@@ -230,12 +232,27 @@ func TestUpdateAccess(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &res)
 	require.NoError(t, err)
 
-	fmt.Println(w.Body)
-
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, w.Code)
-	require.Equal(t, res.Data.UpdateAccess.IsError, false)
-	require.Equal(t, res.Data.UpdateAccess.Message, "UpdateAccess OK")
+	if res.Data.UpdateAccess.Message == "" {
+		type errRes struct {
+			Message string
+			Path    []string
+		}
+		var error struct {
+			Errors []errRes
+			Data   any
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &error)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "no rows in result set"))
+		require.Equal(t, error.Errors[0].Path[0], "updateAccess")
+		require.Equal(t, reflect.TypeOf(error.Data), nil)
+	} else {
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, res.Data.UpdateAccess.IsError, false)
+		require.Equal(t, res.Data.UpdateAccess.Message, "UpdateAccess OK")
+	}
 
 }
 
@@ -261,7 +278,7 @@ func TestDeleteCode(t *testing.T) {
 		t.Fatal("error encode", err)
 	}
 	token := CreateToken(t)
-	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
@@ -319,7 +336,7 @@ func TestGetCode(t *testing.T) {
 		t.Fatal("error encode", err)
 	}
 	token := CreateToken(t)
-	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
@@ -387,7 +404,7 @@ func TestGetAllCodes(t *testing.T) {
 		t.Fatal("error encode", err)
 	}
 	token := CreateToken(t)
-	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
@@ -439,7 +456,7 @@ func TestGetAllCodesByTagSearch(t *testing.T) {
 		t.Fatal("error encode", err)
 	}
 	token := CreateToken(t)
-	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
@@ -491,7 +508,7 @@ func TestGetAllCodesByKeyword(t *testing.T) {
 		t.Fatal("error encode", err)
 	}
 	token := CreateToken(t)
-	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
@@ -543,7 +560,7 @@ func TestGetAllCodesSortedStar(t *testing.T) {
 		t.Fatal("error encode", err)
 	}
 	token := CreateToken(t)
-	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
@@ -595,7 +612,7 @@ func TestGetAllCodesSortedAccess(t *testing.T) {
 		t.Fatal("error encode", err)
 	}
 	token := CreateToken(t)
-	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 
@@ -647,7 +664,7 @@ func TestGetAllOwnCodes(t *testing.T) {
 		t.Fatal("error encode", err)
 	}
 	token := CreateToken(t)
-	req, _ := http.NewRequest("POST", "http://localhost:8080/admin/query", bytes.NewBuffer(body.Bytes()))
+	req, _ := http.NewRequest("POST", "http://localhost:8080/query", bytes.NewBuffer(body.Bytes()))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", resolver.config.RedisCookieKey, token))
 

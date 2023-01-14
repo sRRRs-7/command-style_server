@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -13,12 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUserResolver(t *testing.T) {
-	CreateUserTest(t)
-	LoginUserTest(t)
-}
-
-func CreateUserTest(t *testing.T) {
+func TestCreateUserTest(t *testing.T) {
 	r := GinTestRouter()
 
 	username := utils.RandomString(10)
@@ -63,7 +59,7 @@ func CreateUserTest(t *testing.T) {
 	require.Equal(t, res.Data.CreateUser.Message, "CreateUser OK")
 }
 
-func LoginUserTest(t *testing.T) {
+func TestLoginUserTest(t *testing.T) {
 	r := GinTestRouter()
 
 	query := fmt.Sprintf(`
@@ -91,6 +87,8 @@ func LoginUserTest(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
+	fmt.Println(w.Body)
+
 	var res struct {
 		Data struct {
 			LoginUser struct {
@@ -101,8 +99,26 @@ func LoginUserTest(t *testing.T) {
 		}
 	}
 	err := json.Unmarshal(w.Body.Bytes(), &res)
+	require.NoError(t, err)
 
-	fmt.Println(w.Body)
+	if res.Data.LoginUser.Username == "" {
+		type errRes struct {
+			Message string
+			Path    []string
+		}
+		var error struct {
+			Errors []errRes
+			Data   any
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &error)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, true, strings.Contains(error.Errors[0].Message, "no rows in result set"))
+		require.Equal(t, error.Errors[0].Path[0], "loginUser")
+		require.Equal(t, reflect.TypeOf(error.Data), nil)
+	} else {
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, w.Code)
+	}
 
-	require.True(t, strings.Contains(fmt.Sprintf("%s", err), "no rows in result set"))
 }

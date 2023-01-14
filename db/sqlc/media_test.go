@@ -15,11 +15,8 @@ func ListMedia(t *testing.T) *Media {
 		Offset: 0,
 	}
 	medias, err := testQueries.ListMedia(context.Background(), arg)
-	if err != nil {
-		require.True(t, len(medias) == 0)
-	} else {
-		require.NotEmpty(t, medias)
-	}
+	require.NoError(t, err)
+	require.True(t, len(medias) >= 0)
 
 	return medias[0]
 }

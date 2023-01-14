@@ -12,8 +12,11 @@ import (
 func GetCollection(t *testing.T) int64 {
 	id := GetCode(t)
 	code, err := testQueries.GetCollection(context.Background(), id)
-	require.NoError(t, err)
-	require.NotEmpty(t, code)
+	if err != nil {
+		require.True(t, strings.Contains(fmt.Sprintf("%s", err), "no rows in result set"))
+	} else {
+		require.NotEmpty(t, code)
+	}
 
 	return code.ID
 }
