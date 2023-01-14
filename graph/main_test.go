@@ -3,7 +3,6 @@ package graph
 import (
 	"context"
 	"log"
-	"os"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -41,7 +40,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("new resolver error: %v", err)
 	}
 
-	os.Exit(m.Run())
+	m.Run()
 }
 
 func GinTestRouter() *gin.Engine {
